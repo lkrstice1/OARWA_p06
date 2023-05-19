@@ -1,18 +1,21 @@
 import React, {useState, useEffect} from 'react'
 import Poruka from './components/Poruka'
 import axios from 'axios' //dodana komponenta
+import porukeAkcija from './services/poruke'
 
 const App = (props) => {
   const [ poruke, postaviPoruke] = useState([])
   const [ unosPoruke, postaviUnos] = useState('unesi poruku...')
   const [ ispisSve, postaviIspis] = useState(true)
+  
 
   const porukeZaIspis = ispisSve
   ? poruke
   : poruke.filter(poruka => poruka.vazno === true)
 
+  
   useEffect( () => {
-    axios.get("http://localhost:3001/api/poruke")
+    porukeAkcija.dohvatiSve()
     .then(res => postaviPoruke(res.data))
   }, [])
 
@@ -25,8 +28,7 @@ const App = (props) => {
       datum: new Date(),
       vazno: Math.random() > 0.5      
     }
-    axios
-      .post("http://localhost:3001/api/poruke", noviObjekt)
+    porukeAkcija.stvori(noviObjekt)
       .then(res => {
         postaviPoruke(poruke.concat(res.data))
         postaviUnos('')
@@ -39,20 +41,20 @@ const App = (props) => {
   }
 
   const promjenaVaznostiPoruke = (id) => {
-    const url = `http://localhost:3001/api/poruke/${id}`
     const poruka = poruke.find(p => p.id === id)
     const modPoruka = {
       ...poruka,
       vazno: !poruka.vazno
     }
-    axios.put(url, modPoruka)
+    porukeAkcija.osvjezi(id, modPoruka)
       .then(response => {
+        console.log(response)
         postaviPoruke(poruke.map(p => p.id !== id ? p : response.data))
       })
   }
 
   const brisiPoruku = (id) => {
-    axios.delete(`http://localhost:3001/api/poruke/${id}`)
+    porukeAkcija.brisi(id)
     .then(response => {
       console.log(response);
       postaviPoruke(poruke.filter(p => p.id !== id))
